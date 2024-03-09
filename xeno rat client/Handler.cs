@@ -90,6 +90,7 @@ namespace xeno_rat_client
                         CreateSubSock(data);
                         break;
                     case 1:
+                        // 发送主机信息
                         await GetAndSendInfo(Main);
                         break;
                     case 2:

