@@ -97,36 +97,37 @@ namespace xeno_rat_client
         }
         public static string GetAntivirus()
         {
-            List<string> antivirus = new List<string>();
-            try
-            {
-                string Path = @"\\" + Environment.MachineName + @"\root\SecurityCenter2";
-                using (ManagementObjectSearcher MOS = new ManagementObjectSearcher(Path, "SELECT * FROM AntivirusProduct"))
-                {
-                    foreach (var Instance in MOS.Get())
-                    {
-                        string anti = Instance.GetPropertyValue("displayName").ToString();
-                        if (!antivirus.Contains(anti)) 
-                        {
-                            antivirus.Add(anti);
-                        }
-                        Instance.Dispose();
-                    }
-                    if (antivirus.Count == 0) 
-                    {
-                        antivirus.Add("N/A");
-                    }   
-                }
-                return string.Join(", ", antivirus);
-            }
-            catch
-            {
-                if (antivirus.Count == 0)
-                {
-                    antivirus.Add("N/A");
-                }
-                return string.Join(", ", antivirus);
-            }
+            return "N/A";
+            //List<string> antivirus = new List<string>();
+            //try
+            //{
+            //    string Path = @"\\" + Environment.MachineName + @"\root\SecurityCenter2";
+            //    using (ManagementObjectSearcher MOS = new ManagementObjectSearcher(Path, "SELECT * FROM AntivirusProduct"))
+            //    {
+            //        foreach (var Instance in MOS.Get())
+            //        {
+            //            string anti = Instance.GetPropertyValue("displayName").ToString();
+            //            if (!antivirus.Contains(anti)) 
+            //            {
+            //                antivirus.Add(anti);
+            //            }
+            //            Instance.Dispose();
+            //        }
+            //        if (antivirus.Count == 0) 
+            //        {
+            //            antivirus.Add("N/A");
+            //        }   
+            //    }
+            //    return string.Join(", ", antivirus);
+            //}
+            //catch
+            //{
+            //    if (antivirus.Count == 0)
+            //    {
+            //        antivirus.Add("N/A");
+            //    }
+            //    return string.Join(", ", antivirus);
+            //}
         }
 
         public static string GetWindowsVersion()
@@ -148,14 +149,15 @@ namespace xeno_rat_client
         }
         public static string HWID()
         {
-            try
-            {
-                return GetHash(string.Concat(Environment.ProcessorCount, Environment.UserName, Environment.MachineName, Environment.OSVersion,new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory)).TotalSize));
-            }
-            catch
-            {
-                return "UNKNOWN";
-            }
+            return "N/A";
+            //try
+            //{
+            //    return GetHash(string.Concat(Environment.ProcessorCount, Environment.UserName, Environment.MachineName, Environment.OSVersion,new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory)).TotalSize));
+            //}
+            //catch
+            //{
+            //    return "UNKNOWN";
+            //}
         }
 
         public static string GetHash(string strToHash)
